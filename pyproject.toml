@@ -1,0 +1,46 @@
+[project]
+name = "l2awinddirection"
+requires-python = ">= 3.9"
+description = "Python library to generate Level-2A wind direction files"
+readme.file = "README.md"
+readme.content-type = "text/markdown"
+license = {text = "MIT"}
+keywords = ["SAR", "wind", "reseach", "neural-network","texture","tensorflow"]
+authors = [
+  {name = "Robin Marquart"},
+  {name = "Antoine Grouazel"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "xarray",
+    "scipy",
+    "netCDF4",
+    "xrft",
+    "xarray-datatree",
+    "importlib_resources",
+    "tensorflow",
+    'tqdm'
+]
+dynamic = ["version"]
+
+[build-system]
+requires = ["setuptools>=64.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["l2awinddirection"]
+
+[tool.setuptools_scm]
+fallback_version = "999"
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+float_to_top = true
+default_section = "THIRDPARTY"
+known_first_party = "l2awinddirection"
+
+[project.scripts]
+
