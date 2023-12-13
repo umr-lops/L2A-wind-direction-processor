@@ -3,7 +3,8 @@ A Grouazel
 Oct 2023
 <div class="alert alert-block alert-warning">
 <b>WARNING:</b>
-As the bindings are not properly set up on datarmor-jupyter-hub, it is not possible to process files on /home/datawork-cersat-project using the singularity servers available on datarmor-jupyterhub. <br>
+As the bindings are not properly set up on datarmor-jupyter-hub, it is not possible to process files on
+ /home/datawork-cersat-project using the singularity servers available on datarmor-jupyterhub. <br>
 <b>Use the validation server</b> to be able to see the files on /home/datawork-cersat-project.
 </div>
 
@@ -13,11 +14,6 @@ inspired from generate_L1_wind_product_v2.ipynb (R Marquart)
 """
 import numpy as np
 import xarray as xr
-import glob
-import os
-
-from tqdm import tqdm
-
 # /!\ --------- /!\ ---------- /!\ #
 # /!\ ----- M64RN4 class ----!\ #
 # !\ --------- /!\ ---------- /!\ #
@@ -150,26 +146,4 @@ def compute_most_likely_direction(weights, angles):
     return angles[np.argmax(weights)]
 
 
-def main():
-    #  Parameters to instantiante the models
-    input_shape = (44, 44, 1)
-    data_augmentation = True
-    learning_rate = 1e-3
-    n_classes = 36
 
-    model_m64rn4 = M64RN4_distribution(input_shape, data_augmentation, n_classes)
-    model_m64rn4.create_and_compile(learning_rate)
-    path_model = '/home/datawork-cersat-project/mpc-sentinel1/analysis/s1_data_analysis/project_rmarquar/wsat/trained_models/iw_distribution/09h07_epoch_02__loss6.06.hdf5'
-    path_model = '/raid/localscratch/agrouaze/09h07_epoch_02__loss6.06.hdf5'
-    model_m64rn4.model.load_weights(path_model)
-    files = glob.glob('/raid/localscratch/agrouaze/tiles_iw_4_wdir/3.1/*/*.nc')
-    print("Number of files to process: %d" % len(files))
-    for file in tqdm(files):
-        tiles = xr.open_dataset(file)
-        if len(tiles.variables.keys()) == 0:
-            continue
-        res = generate_wind_distribution_product(tiles, model_m64rn4, nb_classes=36, shape=(44, 44, 1))
-        res.to_netcdf(file.replace('.nc', '_wind.nc'))
-        # if you want to remove the file containing the tiles used for inference (data kept in final product)
-        del tiles
-        os.remove(file)
