@@ -23,8 +23,7 @@ dependencies = [
 
 dynamic = ["version"]
 
-[options.extras_require]
-tensorflow = tensorflow
+optional-dependencies = ["tensorflow"]
 
 
 [build-system]
