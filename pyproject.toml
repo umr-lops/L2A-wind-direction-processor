@@ -23,7 +23,8 @@ dependencies = [
 
 dynamic = ["version"]
 
-optional-dependencies = ["tensorflow"]
+[project.optional-dependencies]
+prediction = ["tensorflow"]
 
 
 [build-system]
