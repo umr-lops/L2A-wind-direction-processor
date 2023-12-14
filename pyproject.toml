@@ -18,10 +18,14 @@ dependencies = [
     "scipy",
     "netCDF4",
     "importlib_resources",
-    "tensorflow",
     'tqdm'
 ]
+
 dynamic = ["version"]
+
+[options.extras_require]
+tensorflow = tensorflow
+
 
 [build-system]
 requires = ["setuptools>=64.0", "setuptools-scm"]
