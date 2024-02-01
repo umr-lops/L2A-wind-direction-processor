@@ -1,14 +1,16 @@
 """Main module."""
 import glob
 import os
-from l2awinddirection.M64RN4 import M64RN4_distribution
+
 import xarray as xr
 from tqdm import tqdm
 import logging
 import time
 import numpy as np
+
 from l2awinddirection.generate_L2A_winddir_pdf_product import generate_wind_distribution_product
 from l2awinddirection.utils import get_conf
+from l2awinddirection.M64RN4 import M64RN4_distribution
 conf = get_conf()
 def get_memory_usage():
     try:
@@ -74,7 +76,9 @@ def main():
     # files = glob.glob("/raid/localscratch/agrouaze/tiles_iw_4_wdir/3.1/*SAFE/*.nc")
     files = glob.glob(os.path.join(args.l2awindirtilessafe,'*.nc'))
     logging.info("Number of files to process: %d" % len(files))
-    for file in tqdm(files):
+    for ii in tqdm(range(len(files))):
+        file = files[ii]
+#     for file in files:
         outputfile = file.replace("_wind.nc", "_winddirection.nc") # TODO: change to _tiles.nc -> _winddirection.nc
         tiles = xr.open_dataset(file)
         if len(tiles.variables.keys()) == 0:

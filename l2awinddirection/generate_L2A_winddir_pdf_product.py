@@ -17,8 +17,10 @@ import xarray as xr
 # /!\ --------- /!\ ---------- /!\ #
 # /!\ ----- M64RN4 class ----!\ #
 # !\ --------- /!\ ---------- /!\ #
-
-from l2awinddirection.M64RN4 import M64RN4_distribution
+# try:
+#     from l2awinddirection.M64RN4 import M64RN4_distribution
+# except:
+from M64RN4 import M64RN4_distribution
 
 
 def generate_wind_distribution_product(tiles, m64rn4, nb_classes=36, shape=(44, 44, 1)):
@@ -31,7 +33,10 @@ def generate_wind_distribution_product(tiles, m64rn4, nb_classes=36, shape=(44, 
     Returns:
         xarray.Dataset: dataset containing the tiles with associated wind direction.
     """
-    tiles_stacked = tiles.stack(all_tiles=['burst', 'tile_line', 'tile_sample'])
+    try:
+        tiles_stacked = tiles.stack(all_tiles=['burst', 'tile_line', 'tile_sample'])
+    except:
+        tiles_stacked = tiles.stack(all_tiles=['tile_line', 'tile_sample'])
     tiles_stacked_no_nan = tiles_stacked.where(~np.any(np.isnan(tiles_stacked.sigma0), axis=(0, 1)), drop=True)
     X = tiles_stacked_no_nan.sigma0.transpose('all_tiles', 'azimuth', 'range').values
     X_normalized = np.array([((x - np.average(x)) / np.std(x)).reshape(shape) for x in X])  # Normalize data
