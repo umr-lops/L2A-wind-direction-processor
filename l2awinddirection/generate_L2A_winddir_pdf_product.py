@@ -17,10 +17,8 @@ import xarray as xr
 # /!\ --------- /!\ ---------- /!\ #
 # /!\ ----- M64RN4 class ----!\ #
 # !\ --------- /!\ ---------- /!\ #
-# try:
-#     from l2awinddirection.M64RN4 import M64RN4_distribution
-# except:
-from M64RN4 import M64RN4_distribution
+
+from l2awinddirection.M64RN4 import M64RN4_distribution
 
 
 def generate_wind_distribution_product(tiles, m64rn4, nb_classes=36, shape=(44, 44, 1)):
@@ -132,7 +130,7 @@ def compute_standard_deviation(weights, angles):
 
     A = np.abs(angles - mean_dir)
     B = np.abs(180 - np.abs(angles - mean_dir))
-    #  Select the min difference between the two terms defined above to deal with 180° discontinuity
+    # Select the min difference between the two terms defined above to deal with 180° discontinuity
     delta = np.min(np.vstack([A, B]), axis=0)  # 180° ambiguity
     variance = np.sum(weights * delta ** 2)
 
