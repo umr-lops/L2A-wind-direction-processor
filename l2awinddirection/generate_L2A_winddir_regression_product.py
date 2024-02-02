@@ -1,21 +1,18 @@
+"""
+inspired from predict_wind_direction.py (project_rmarquart)
+January 2024
+"""
 import numpy as np
 import scipy as sp
-import pandas as pd
 import xarray as xr
 from scipy import stats
 import glob
 import os, sys
-
 from tqdm import tqdm
+from l2awinddirection.M64RN4 import M64RN4_regression
 
-# /!\ --------- /!\ ---------- /!\ #
-# /!\ ----- M64RN4 class ----- /!\ # 
-# /!\ --------- /!\ ---------- /!\ #
-sys.path.append('./../shared_codes')
-from M64RN4 import M64RN4_regression
-
-# --------------------- # 
-# ----- Functions ----- # 
+# --------------------- #
+# ----- Functions ----- #
 # --------------------- #
 
 def generate_wind_product(tiles, model_regs, shape = (44, 44, 1)):
@@ -35,7 +32,7 @@ def generate_wind_product(tiles, model_regs, shape = (44, 44, 1)):
     
     heading_angle = np.deg2rad(tiles_stacked_no_nan['ground_heading'].values) 
     
-    # Predict wind directions using all models and obtain mean and std values
+    #Predict wind directions using all models and obtain mean and std values
     predictions = launch_prediction(X_normalized, model_regs)
     mean_prediction = sp.stats.circmean(predictions, np.pi, axis = 1)
     std_prediction = sp.stats.circstd(predictions, np.pi, axis = 1)
@@ -77,15 +74,15 @@ def launch_prediction(X_normalized, model_regs):
 
 if __name__ == "__main__":
 
-    # Parameters to instantiante the models
+    #Parameters to instantiante the models
     input_shape = (44, 44, 1)
     data_augmentation = True
     learning_rate = 1e-3
 
     model_regs = []
 
-    # Modify path_best_models depending of the acquisition mode (iw, ew, wv)
-    path_best_models = glob.glob('/home/datawork-cersat-project/mpc-sentinel1/analysis/s1_data_analysis/project_rmarquar/wsat/trained_models/iw/*.hdf5')
+    #Modify path_best_models depending of the acquisition mode (iw, ew, wv)
+    path_best_models = glob.glob('.../analysis/s1_data_analysis/project_rmarquar/wsat/trained_models/iw/*.hdf5')
     for path in path_best_models:
 
         m64rn4_reg = M64RN4_regression(input_shape, data_augmentation)
@@ -96,8 +93,8 @@ if __name__ == "__main__":
         model_regs.append(m64rn4_reg)
 
 
-    # Get listing of files from which to generate the wind direction
-    files = glob.glob('/home/datawork-cersat-project/mpc-sentinel1/analysis/s1_data_analysis/project_rmarquar/slc_wind_product/1.4k/*/tiles*1.4k.nc')
+    #Get listing of files from which to generate the wind direction
+    files = glob.glob('.../analysis/s1_data_analysis/project_rmarquar/slc_wind_product/1.4k/*/tiles*1.4k.nc')
     print("Number of files to process: %d" % len(files))
 
     for file in tqdm(files):
