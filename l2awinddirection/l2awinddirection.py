@@ -181,7 +181,7 @@ def main():
             logging.info("remove temporary tiles file in the workspace: %s", file)
             os.remove(file)
     final_safe_path = os.path.join(
-        args.outpurdir, os.path.basename(args.l2awindirtilessafe)
+        args.outputdir, os.path.basename(args.l2awindirtilessafe)
     )
     if not os.path.exists(os.path.dirname(final_safe_path)):
         logging.info("mkdir %s", os.path.dirname(final_safe_path))
