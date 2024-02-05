@@ -106,7 +106,6 @@ def main():
             level=logging.INFO, format=fmt, datefmt="%d/%m/%Y %H:%M:%S", force=True
         )
     t0 = time.time()
-    logging.info("product version to produce: %s", args.version)
     logging.info("outputdir will be: %s", args.outputdir)
 
     # Parameters to instantiante the models
