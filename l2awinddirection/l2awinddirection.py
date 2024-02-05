@@ -162,9 +162,6 @@ def main():
     for ii in tqdm(range(len(files))):
         file = files[ii]
         #     for file in files:
-        outputfile = file.replace(
-            "_wind.nc", "_winddirection.nc"
-        )  # TODO: change to _tiles.nc -> _winddirection.nc
         tiles = xr.open_dataset(file)
         if len(tiles.variables.keys()) == 0:
             continue
@@ -172,10 +169,16 @@ def main():
             res = generate_wind_distribution_product(
                 tiles, model_m64rn4, nb_classes=36, shape=(44, 44, 1)
             )
+            outputfile = file.replace(
+                "_wind.nc", "_winddirection_pdf.nc"
+            )  # TODO: change to _tiles.nc -> _winddirection.nc
             res.to_netcdf(outputfile)
         elif args.mode == "regression":
+            outputfile = file.replace(
+                "_wind.nc", "_winddirection_regression.nc"
+            )  # TODO: change to _tiles.nc -> _winddirection.nc
             res = generate_wind_product(tiles, model_m64rn4)
-            res.to_netcdf(file.replace(".nc", "_wind.nc"))
+            res.to_netcdf(outputfile)
         # if you want to remove the file containing the tiles used for inference (data kept in final product)
         del tiles
         if args.remove_tiles:
