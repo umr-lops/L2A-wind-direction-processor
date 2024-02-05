@@ -153,8 +153,9 @@ def main():
         workspace,
     )
     safefile = os.path.join(workspace, os.path.basename(args.l2awindirtilessafe))
-    logging.info(" step 1: move %s -> %s", args.l2awindirtilessafe, safefile)
-    shutil.move(args.l2awindirtilessafe, safefile)
+    if not os.path.exists(safefile):
+        logging.info(" step 1: move %s -> %s", args.l2awindirtilessafe, safefile)
+        shutil.copytree(args.l2awindirtilessafe, safefile)
     files = glob.glob(os.path.join(safefile, "*.nc"))
     logging.info("Number of files to process: %d" % len(files))
     logging.info("step 2: predictions")
