@@ -1,6 +1,6 @@
 [project]
 name = "l2awinddirection"
-requires-python = ">= 3.9"
+requires-python = ">= 3.8"
 description = "Python library to generate Level-2A wind direction files"
 readme.file = "README.md"
 readme.content-type = "text/markdown"
