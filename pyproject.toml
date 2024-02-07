@@ -18,7 +18,9 @@ dependencies = [
     "scipy",
     "netCDF4",
     "importlib_resources",
-    'tqdm'
+    'tqdm',
+    'pyyaml',
+    'matplotlib'
 ]
 
 dynamic = ["version"]
