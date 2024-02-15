@@ -3,15 +3,10 @@ inspired from predict_wind_direction.py (project_rmarquart)
 January 2024
 """
 import pdb
-
 import numpy as np
 import scipy as sp
-import xarray as xr
 from scipy import stats
-import glob
-import os, sys
-from tqdm import tqdm
-from l2awinddirection.M64RN4 import M64RN4_regression
+
 
 # --------------------- #
 # ----- Functions ----- #
