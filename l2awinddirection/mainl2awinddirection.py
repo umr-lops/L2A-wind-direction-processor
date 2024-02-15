@@ -247,7 +247,11 @@ def main():
             res = generate_wind_product(tiles, model_m64rn4)
         res.attrs["winddirection_L2A_processor"] = "l2awinddirection"
         res.attrs["winddirection_L2A_processor_version"] = l2awinddirection.__version__
-        res.attrs["used_channel"] = res.coords["pol"].values
+        if 'pol' in res.coords:
+            res.attrs["used_channel"] = res.coords["pol"].values
+        else:
+            res.attrs['used_channel'] = res['selected_pol'].values
+            # res.attrs["used_channel"] =
         res.attrs["winddirection_L2A_processor_mode"] = args.mode
         if 'pol' in res.coords:
             res = res.drop('pol')
