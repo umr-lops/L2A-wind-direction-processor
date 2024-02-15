@@ -38,9 +38,9 @@ def generate_wind_distribution_product(tiles, m64rn4, nb_classes=36, shape=(44, 
         tiles_stacked = tiles.stack(all_tiles=["burst", "tile_line", "tile_sample"])
     except:
         tiles_stacked = tiles.stack(all_tiles=["tile_line", "tile_sample"])
-    mask0 = ~np.any(
-        np.isnan(tiles_stacked.sigma0), axis=(0, 1)
-    )  # original mask from Robin, sigma0 never contains NaN contrarily to sigma0_filt
+    # mask0 = ~np.any(
+    #     np.isnan(tiles_stacked.sigma0), axis=(0, 1)
+    # )  # original mask from Robin, sigma0 never contains NaN contrarily to sigma0_filt
     mask = tiles_stacked.land_flag == False  # test AG
     mask_indices = np.where(mask)
     tiles_stacked_no_nan = tiles_stacked.where(mask, drop=True)
