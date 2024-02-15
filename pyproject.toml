@@ -47,4 +47,4 @@ default_section = "THIRDPARTY"
 known_first_party = "l2awinddirection"
 
 [project.scripts]
-L2a-wind-dir-processor = "l2awinddirection.l2awinddirection:main"
+L2a-wind-dir-processor = "l2awinddirection.mainl2awinddirection:main"
