@@ -37,6 +37,11 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)
 # logger.setLevel(logging.FATAL)
 
 import l2awinddirection
+try:
+    print(l2awinddirection.__version__)
+    print(l2awinddirection.__file__)
+except:
+    pass
 from l2awinddirection.generate_L2A_winddir_pdf_product import (
     generate_wind_distribution_product,
 )
