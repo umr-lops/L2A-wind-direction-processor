@@ -58,21 +58,20 @@ def generate_wind_distribution_product(tiles, m64rn4, nb_classes=36, shape=(44, 
         [((x - np.average(x)) / np.std(x)).reshape(shape) for x in X]
     )  # Normalize data
 
-    heading_angle = np.deg2rad(tiles_stacked_no_nan["ground_heading"].values)
-    # pdb.set_trace() # check that the heading_angle is not NaN
+    heading_angle = np.deg2rad(tiles_stacked["ground_heading"].values)
     # Assign new coordinates 'bin_centers' to the dataset
     dx = 180 / nb_classes
     angles = np.arange(0 + dx / 2, 180 + dx / 2, dx)
-    predictions = np.ones((tiles_stacked.longitude.size,angles.size)) * np.nan
+    predictions = np.ones((tiles_stacked.longitude.size, angles.size)) * np.nan
     tiles_stacked_no_nan = tiles_stacked_no_nan.assign_coords(
         bin_centers=("bin_centers", angles)
     )
 
     # Predict wind direction distributions and add them to the dataset
     # predictions = np.squeeze(m64rn4.model.predict(X_normalized)) # original Robin
-    if X_normalized.size>0:
+    if X_normalized.size > 0:
         predictions_usable = m64rn4.model.predict(X_normalized)
-        predictions[mask_indices,:] = predictions_usable
+        predictions[mask_indices, :] = predictions_usable
 
     tiles_stacked = tiles_stacked.assign(
         wind_direction_distribution=(["all_tiles", "bin_centers"], predictions)
@@ -86,7 +85,7 @@ def generate_wind_distribution_product(tiles, m64rn4, nb_classes=36, shape=(44, 
         input_core_dims=[["bin_centers"], ["bin_centers"]],
         vectorize=True,
     )
-
+    mean_wdir = mean_wdir + heading_angle
     most_likely_wdir = xr.apply_ufunc(
         compute_most_likely_direction,
         tiles_stacked.wind_direction_distribution,
@@ -94,7 +93,7 @@ def generate_wind_distribution_product(tiles, m64rn4, nb_classes=36, shape=(44, 
         input_core_dims=[["bin_centers"], ["bin_centers"]],
         vectorize=True,
     )
-
+    most_likely_wdir = most_likely_wdir + heading_angle
     std_wdir = xr.apply_ufunc(
         compute_standard_deviation,
         tiles_stacked.wind_direction_distribution,
