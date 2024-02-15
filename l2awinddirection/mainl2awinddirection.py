@@ -37,6 +37,7 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)
 # logger.setLevel(logging.FATAL)
 
 import l2awinddirection
+
 try:
     print(l2awinddirection.__version__)
     print(l2awinddirection.__file__)
@@ -205,8 +206,10 @@ def main():
     if not os.path.exists(safefile) and args.skipmoves is True:
         logging.info(" step 1: move %s -> %s", l2awindirtilessafe, safefile)
         shutil.copytree(l2awindirtilessafe, safefile)
-    polarization_usable = 'vv'
-    files = sorted(glob.glob(os.path.join(safefile, "*"+polarization_usable+"*.nc")))
+    polarization_usable = "vv"
+    files = sorted(
+        glob.glob(os.path.join(safefile, "*" + polarization_usable + "*.nc"))
+    )
     logging.info("Number of files to process: %d" % len(files))
     if not os.path.exists(args.outputdir):
         logging.info("mkdir %s", args.outputdir)
@@ -231,9 +234,6 @@ def main():
                 outputfile = outputfile.replace(workspace, args.outputdir)
                 if not os.path.exists(os.path.dirname(outputfile)):
                     os.makedirs(os.path.dirname(outputfile))
-            res.attrs["winddirection_L2A_processor"] = "l2awinddirection"
-            res.attrs["winddirection_L2A_processor_version"] = l2awinddirection.__version__
-            res.to_netcdf(outputfile)
         elif args.mode == "regression":
 
             outputfile = file.replace(
@@ -245,9 +245,13 @@ def main():
                     os.makedirs(os.path.dirname(outputfile))
 
             res = generate_wind_product(tiles, model_m64rn4)
-            res.attrs["winddirection_L2A_processor"] = "l2awinddirection"
-            res.attrs["winddirection_L2A_processor_version"] = l2awinddirection.__version__
-            res.to_netcdf(outputfile)
+        res.attrs["winddirection_L2A_processor"] = "l2awinddirection"
+        res.attrs["winddirection_L2A_processor_version"] = l2awinddirection.__version__
+        res.attrs["used_channel"] = res.coords["pol"].values
+        res.attrs["winddirection_L2A_processor_mode"] = args.mode
+        if 'pol' in res.coords:
+            res = res.drop('pol')
+        res.to_netcdf(outputfile)
 
         # if you want to remove the file containing the tiles used for inference (data kept in final product)
         del tiles
