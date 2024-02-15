@@ -38,102 +38,110 @@ def generate_wind_distribution_product(tiles, m64rn4, nb_classes=36, shape=(44, 
         tiles_stacked = tiles.stack(all_tiles=["burst", "tile_line", "tile_sample"])
     except:
         tiles_stacked = tiles.stack(all_tiles=["tile_line", "tile_sample"])
-    mask0=~np.any(np.isnan(tiles_stacked.sigma0), axis=(0, 1)) # original mask from Robin, sigma0 never contains NaN contrarily to sigma0_filt
-    mask=tiles_stacked.land_flag==False # test AG
-    pdb.set_trace()
+    mask0 = ~np.any(
+        np.isnan(tiles_stacked.sigma0), axis=(0, 1)
+    )  # original mask from Robin, sigma0 never contains NaN contrarily to sigma0_filt
+    mask = tiles_stacked.land_flag == False  # test AG
+    mask_indices = np.where(mask)
     tiles_stacked_no_nan = tiles_stacked.where(mask, drop=True)
-    X = tiles_stacked_no_nan.sigma0.transpose("all_tiles", "azimuth", "range").values
+
+    if "sigma0_filt" in tiles_stacked:
+        X = tiles_stacked_no_nan.sigma0_filt.transpose(
+            "all_tiles", "azimuth", "range"
+        ).values
+    else:
+        X = tiles_stacked_no_nan.sigma0.transpose(
+            "all_tiles", "azimuth", "range"
+        ).values
+
     X_normalized = np.array(
         [((x - np.average(x)) / np.std(x)).reshape(shape) for x in X]
     )  # Normalize data
 
     heading_angle = np.deg2rad(tiles_stacked_no_nan["ground_heading"].values)
-
+    # pdb.set_trace() # check that the heading_angle is not NaN
     # Assign new coordinates 'bin_centers' to the dataset
     dx = 180 / nb_classes
     angles = np.arange(0 + dx / 2, 180 + dx / 2, dx)
-
+    predictions = np.ones((tiles_stacked.longitude.size,angles.size)) * np.nan
     tiles_stacked_no_nan = tiles_stacked_no_nan.assign_coords(
         bin_centers=("bin_centers", angles)
     )
 
     # Predict wind direction distributions and add them to the dataset
     # predictions = np.squeeze(m64rn4.model.predict(X_normalized)) # original Robin
-    predictions = m64rn4.model.predict(X_normalized)
-    tiles_stacked_no_nan = tiles_stacked_no_nan.assign(
+    if X_normalized.size>0:
+        predictions_usable = m64rn4.model.predict(X_normalized)
+        predictions[mask_indices,:] = predictions_usable
+
+    tiles_stacked = tiles_stacked.assign(
         wind_direction_distribution=(["all_tiles", "bin_centers"], predictions)
     )
 
     # Compute mean wind direction, most likely wind direction and associated standard deviation
     mean_wdir = xr.apply_ufunc(
         compute_mean_direction,
-        tiles_stacked_no_nan.wind_direction_distribution,
-        tiles_stacked_no_nan.bin_centers,
+        tiles_stacked.wind_direction_distribution,
+        tiles_stacked.bin_centers,
         input_core_dims=[["bin_centers"], ["bin_centers"]],
         vectorize=True,
     )
 
     most_likely_wdir = xr.apply_ufunc(
         compute_most_likely_direction,
-        tiles_stacked_no_nan.wind_direction_distribution,
-        tiles_stacked_no_nan.bin_centers,
+        tiles_stacked.wind_direction_distribution,
+        tiles_stacked.bin_centers,
         input_core_dims=[["bin_centers"], ["bin_centers"]],
         vectorize=True,
     )
 
     std_wdir = xr.apply_ufunc(
         compute_standard_deviation,
-        tiles_stacked_no_nan.wind_direction_distribution,
-        tiles_stacked_no_nan.bin_centers,
+        tiles_stacked.wind_direction_distribution,
+        tiles_stacked.bin_centers,
         input_core_dims=[["bin_centers"], ["bin_centers"]],
         vectorize=True,
     )
 
     # Format dataset
-    tiles_stacked_no_nan = tiles_stacked_no_nan.assign(
-        mean_wdir=(["all_tiles"], mean_wdir.data)
-    )
-    tiles_stacked_no_nan["mean_wdir"].attrs[
+    tiles_stacked = tiles_stacked.assign(mean_wdir=(["all_tiles"], mean_wdir.data))
+    tiles_stacked["mean_wdir"].attrs[
         "definition"
     ] = "180° ambiguous mean wind direction."
-    tiles_stacked_no_nan["mean_wdir"].attrs["long_name"] = "Mean wind direction"
-    tiles_stacked_no_nan["mean_wdir"].attrs[
+    tiles_stacked["mean_wdir"].attrs["long_name"] = "Mean wind direction"
+    tiles_stacked["mean_wdir"].attrs[
         "convention"
     ] = "Clockwise, relative to geographic North."
-    tiles_stacked_no_nan["mean_wdir"].attrs["units"] = "degree"
-    tiles_stacked_no_nan["mean_wdir"].attrs["vmin"] = 0
-    tiles_stacked_no_nan["mean_wdir"].attrs["vmax"] = 180
+    tiles_stacked["mean_wdir"].attrs["units"] = "degree"
+    tiles_stacked["mean_wdir"].attrs["vmin"] = 0
+    tiles_stacked["mean_wdir"].attrs["vmax"] = 180
 
-    tiles_stacked_no_nan = tiles_stacked_no_nan.assign(
+    tiles_stacked = tiles_stacked.assign(
         most_likely_wdir=(["all_tiles"], most_likely_wdir.data)
     )
-    tiles_stacked_no_nan["most_likely_wdir"].attrs[
+    tiles_stacked["most_likely_wdir"].attrs[
         "definition"
     ] = "180° ambiguous most likely wind direction, defined with a bin precision of 2.5°."
-    tiles_stacked_no_nan["most_likely_wdir"].attrs[
-        "long_name"
-    ] = "Most likely wind direction"
-    tiles_stacked_no_nan["most_likely_wdir"].attrs[
+    tiles_stacked["most_likely_wdir"].attrs["long_name"] = "Most likely wind direction"
+    tiles_stacked["most_likely_wdir"].attrs[
         "convention"
     ] = "Clockwise, relative to geographic North."
-    tiles_stacked_no_nan["most_likely_wdir"].attrs["units"] = "degree"
-    tiles_stacked_no_nan["most_likely_wdir"].attrs["vmin"] = 0
-    tiles_stacked_no_nan["most_likely_wdir"].attrs["vmax"] = 180
+    tiles_stacked["most_likely_wdir"].attrs["units"] = "degree"
+    tiles_stacked["most_likely_wdir"].attrs["vmin"] = 0
+    tiles_stacked["most_likely_wdir"].attrs["vmax"] = 180
 
-    tiles_stacked_no_nan = tiles_stacked_no_nan.assign(
-        std_wdir=(["all_tiles"], std_wdir.data)
-    )
-    tiles_stacked_no_nan["std_wdir"].attrs[
+    tiles_stacked = tiles_stacked.assign(std_wdir=(["all_tiles"], std_wdir.data))
+    tiles_stacked["std_wdir"].attrs[
         "definition"
     ] = "Standard deviation associated with wind direction."
-    tiles_stacked_no_nan["std_wdir"].attrs[
+    tiles_stacked["std_wdir"].attrs[
         "long_name"
     ] = "Standard deviation of the wind direction"
-    tiles_stacked_no_nan["std_wdir"].attrs["units"] = "degree"
-    tiles_stacked_no_nan["std_wdir"].attrs["vmin"] = 0
-    tiles_stacked_no_nan["std_wdir"].attrs["vmax"] = 180
+    tiles_stacked["std_wdir"].attrs["units"] = "degree"
+    tiles_stacked["std_wdir"].attrs["vmin"] = 0
+    tiles_stacked["std_wdir"].attrs["vmax"] = 180
 
-    return tiles_stacked_no_nan.unstack()
+    return tiles_stacked.unstack()
 
 
 def compute_mean_direction(weights, angles):
