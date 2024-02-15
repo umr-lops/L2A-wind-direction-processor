@@ -206,7 +206,7 @@ def main():
         logging.info(" step 1: move %s -> %s", l2awindirtilessafe, safefile)
         shutil.copytree(l2awindirtilessafe, safefile)
     polarization_usable = 'vv'
-    files = glob.glob(os.path.join(safefile, "*"+polarization_usable+"*.nc"))
+    files = sorted(glob.glob(os.path.join(safefile, "*"+polarization_usable+"*.nc")))
     logging.info("Number of files to process: %d" % len(files))
     if not os.path.exists(args.outputdir):
         logging.info("mkdir %s", args.outputdir)
