@@ -6,6 +6,7 @@ Step 3: move the generated file to the archive storage
 """
 import glob
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import pdb
 import shutil
 import xarray as xr
@@ -13,28 +14,6 @@ from tqdm import tqdm
 import logging
 import time
 import numpy as np
-import warnings
-
-warnings.filterwarnings("ignore")
-# logging.getLogger("tensorflow").setLevel(logging.FATAL)
-import tensorflow as tf
-
-tf.get_logger().setLevel("ERROR")
-logging.getLogger("tensorflow").setLevel(logging.ERROR)
-# tf.debugging.set_log_device_placement(True)
-# logging.getLogger("tensorflow").setLevel(logging.WARNING)
-# tf.logging.set_verbosity(tf.logging.ERROR)
-# tf.keras.utils.disable_interactive_logging()
-# import keras
-# from keras.backend.tensorflow_backend import tf
-
-# tf.keras.utils.disable_interactive_logging()
-# import absl.logging
-# logging.root.removeHandler(absl.logging._absl_handler)
-# absl.logging._warn_preinit_stderr = False
-
-# logger = tf.get_logger()
-# logger.setLevel(logging.FATAL)
 
 import l2awinddirection
 
@@ -49,10 +28,9 @@ from l2awinddirection.generate_L2A_winddir_pdf_product import (
 from l2awinddirection.generate_L2A_winddir_regression_product import (
     generate_wind_product,
 )
-from l2awinddirection.utils import get_conf
+from l2awinddirection.utils import get_conf,get_l2_filepath
 from l2awinddirection.M64RN4 import M64RN4_distribution, M64RN4_regression
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # disable logging tensorflow
 conf = get_conf()
 
 
@@ -98,7 +76,7 @@ def main():
         required=True,
         help="Level-2A wind direction SAFE where are stored the extracted DN tiles",
     )
-    # for now the output files will be in the same directory than the input SAFE
+    # for now the output files will be in the same directory as the input SAFE
     parser.add_argument(
         "--outputdir",
         required=True,
@@ -121,16 +99,21 @@ def main():
     )
     parser.add_argument(
         "--skipmoves",
-        help="skip copy of the tiles in a workspace and move of the L2A winddir files from workspace to outputdir [default=False]",
+        help="True-> skip copy of the tiles in a workspace and move of the L2A winddir files from workspace to outputdir [default=False -> a workspace is used]",
         action="store_true",
         default=False,
     )
     parser.add_argument(
+        "--version",
+        help="product ID of the level-2 wdr to be generated (eg: D03)",
+        required=True,
+    )
+    parser.add_argument(
         "--remove-tiles",
-        help="remove the tiles files in the workspace directory [default=True]",
+        help="remove the tiles files in the workspace directory [default=False -> tiles kept in workspace]",
         required=False,
-        default=True,
-        action="store_false",
+        default=False,
+        action="store_true",
     )
     args = parser.parse_args()
     fmt = "%(asctime)s %(levelname)s %(filename)s(%(lineno)d) %(message)s"
@@ -166,9 +149,6 @@ def main():
         model_m64rn4.model.load_weights(path_model_pdf)
     elif args.mode == "regression":
         model_m64rn4 = []
-        # path_best_models = glob.glob(
-        #     ".../analysis/s1_data_analysis/project_rmarquar/wsat/trained_models/iw/*.hdf5"
-        # )
         path_best_models = glob.glob(os.path.join(dirmodelsreg, "*.hdf5"))
         assert len(path_best_models) > 1
         for path in path_best_models:
@@ -181,34 +161,36 @@ def main():
             model_m64rn4.append(m64rn4_reg)
     else:
         raise Exception("not handled case")
-    # files = glob.glob("/raid/localscratch/agrouaze/tiles_iw_4_wdir/3.1/*SAFE/*.nc")
+
     if args.l2awindirtilessafe.endswith("/"):
 
         l2awindirtilessafe = args.l2awindirtilessafe.rstrip("/")
     else:
         l2awindirtilessafe = args.l2awindirtilessafe
     if args.skipmoves:
-        workspace = os.path.dirname(l2awindirtilessafe)
+        workspace_input = os.path.dirname(l2awindirtilessafe)
         logging.info(
             "workspace is the place where the tiles are already stored: %s (no copies)",
-            workspace,
+            workspace_input,
         )
+        workspace_output = args.outputdir
     else:
         if args.workspace is None:
-            workspace = conf["workspace_prediction"]
+            workspace_input = conf["workspace_prediction"]
         else:
-            workspace = args.workspace
+            workspace_input = args.workspace
         logging.info(
             "workspace where the tiles will be temporarily moved is: %s",
-            workspace,
+            workspace_input,
         )
-    safefile = os.path.join(workspace, os.path.basename(l2awindirtilessafe))
-    if not os.path.exists(safefile) and args.skipmoves is True:
-        logging.info(" step 1: move %s -> %s", l2awindirtilessafe, safefile)
-        shutil.copytree(l2awindirtilessafe, safefile)
+        workspace_output = workspace_input
+    input_safe_full_path = os.path.join(workspace_input, os.path.basename(l2awindirtilessafe))
+    if not os.path.exists(input_safe_full_path) and args.skipmoves is True:
+        logging.info(" step 1: move %s -> %s", l2awindirtilessafe, input_safe_full_path)
+        shutil.copytree(l2awindirtilessafe, input_safe_full_path)
     polarization_usable = "vv"
     files = sorted(
-        glob.glob(os.path.join(safefile, "*" + polarization_usable + "*.nc"))
+        glob.glob(os.path.join(input_safe_full_path, "*" + polarization_usable + "*.nc"))
     )
     logging.info("Number of files to process: %d" % len(files))
     if not os.path.exists(args.outputdir):
@@ -227,20 +209,15 @@ def main():
             res = generate_wind_distribution_product(
                 tiles, model_m64rn4, nb_classes=36, shape=(44, 44, 1)
             )
-            outputfile = file.replace(
-                "_wind.nc", "_winddirection_pdf.nc"
-            )  # TODO: change to _tiles.nc -> _winddirection.nc
+            outputfile = get_l2_filepath(vignette_fullpath=file, version=args.version, outputdir=workspace_output)
             if args.skipmoves:
-                outputfile = outputfile.replace(workspace, args.outputdir)
+                # outputfile = outputfile.replace(workspace_output, args.outputdir)
                 if not os.path.exists(os.path.dirname(outputfile)):
                     os.makedirs(os.path.dirname(outputfile))
         elif args.mode == "regression":
-
-            outputfile = file.replace(
-                "_wind.nc", "_winddirection_regression.nc"
-            )  # TODO: change to _tiles.nc -> _winddirection.nc
+            outputfile = get_l2_filepath(vignette_fullpath=file, version=args.version, outputdir=workspace_output)
             if args.skipmoves:
-                outputfile = outputfile.replace(workspace, args.outputdir)
+                # outputfile = outputfile.replace(workspace_output, args.outputdir)
                 if not os.path.exists(os.path.dirname(outputfile)):
                     os.makedirs(os.path.dirname(outputfile))
 
@@ -262,10 +239,15 @@ def main():
         if args.remove_tiles and args.skipmoves is False:
             logging.info("remove temporary tiles file in the workspace: %s", file)
             os.remove(file)
-    final_safe_path = os.path.join(args.outputdir, os.path.basename(l2awindirtilessafe))
-    if args.skipmoves is False:
-        logging.info("step 3: move %s -> %s", safefile, final_safe_path)
-        shutil.move(safefile, final_safe_path)
+
+    # final_safe_path = os.path.dirname(outputfile)
+    if args.skipmoves is False: # case for which a workspace has been used
+        # final_safe_path = os.path.join(args.outputdir, os.path.basename(l2awindirtilessafe))
+        final_safe_path = os.path.dirname(outputfile).replace(workspace_output,args.outputdir)
+        logging.info("step 3: move %s -> %s", os.path.dirname(outputfile), final_safe_path)
+        shutil.move(os.path.dirname(outputfile), final_safe_path)
+    else:
+        final_safe_path = os.path.dirname(outputfile)
     logging.info("Ifremer Level-2A wind direction SAFE path: %s", final_safe_path)
     logging.info("successful SAFE processing")
     logging.info("peak memory usage: %s ", get_memory_usage())
