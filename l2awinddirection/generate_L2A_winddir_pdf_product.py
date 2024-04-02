@@ -93,6 +93,7 @@ def generate_wind_distribution_product(tiles, m64rn4, nb_classes=36, shape=(44, 
         input_core_dims=[["bin_centers"], ["bin_centers"]],
         vectorize=True,
     )
+    most_likely_wdir = xr.where(tiles_stacked['land_flag'],np.nan,most_likely_wdir) # apply the land_mask on the wdin direction prediction
     most_likely_wdir = most_likely_wdir + heading_angle
     std_wdir = xr.apply_ufunc(
         compute_standard_deviation,

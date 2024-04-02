@@ -41,7 +41,8 @@ def get_l2_filepath(vignette_fullpath, version, outputdir)->str:
     pathout = os.path.join(pathout_root, safe_start_date.strftime('%Y'),safe_start_date.strftime('%j'))
 
     # SAFE part
-    safe_file = safe_file.replace("L1B", "L2").replace('XSP', 'WDR')
+    safe_file = safe_file.replace("L1B", "L2").replace('XSP', 'WDR').replace('TIL','WDR')
+    safe_file = safe_file.replace('_1S','_2S')
     if (
         len(safe_file.split("_")) == 10
     ):  # classical ESA SLC naming #:TODO once xsarslc will be updated this case could be removed
@@ -69,7 +70,7 @@ def get_l2_filepath(vignette_fullpath, version, outputdir)->str:
         start_IFR = base_measu.index('_L1B_xspec_IFR')
         piece_to_remove = base_measu[start_IFR:]
         base_measu = base_measu.replace(piece_to_remove,'.nc')
-    if base_measu.split('-')[-1][0] == 'c': #there is already a version product ID
+    if base_measu.split('-')[-1][0] == 'c' or base_measu.split('-')[-1][0] == 'i': #there is already a version product ID
         base_measu = base_measu.replace(base_measu.split('-')[-1],version.lower() + ".nc")
     else:
         base_measu = base_measu.replace('.nc','-'+version.lower() + ".nc")
@@ -83,6 +84,7 @@ def get_l2_filepath(vignette_fullpath, version, outputdir)->str:
         base_measu = 'l2-'+base_measu
     # base_measu = base_measu.replace(base_measu.split('-')[4], pola_str) # replace -vv- by -dv- or -sv- depending on SAFE information
     base_measu = base_measu.replace('-xsp-','-wdr-')
+    base_measu = base_measu.replace('-til-','-wdr-')
     base_measu = base_measu.replace('-slc-', '-wdr-')
 
 

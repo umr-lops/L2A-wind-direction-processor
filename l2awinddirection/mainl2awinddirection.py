@@ -188,9 +188,8 @@ def main():
     if not os.path.exists(input_safe_full_path) and args.skipmoves is True:
         logging.info(" step 1: move %s -> %s", l2awindirtilessafe, input_safe_full_path)
         shutil.copytree(l2awindirtilessafe, input_safe_full_path)
-    polarization_usable = "vv"
     files = sorted(
-        glob.glob(os.path.join(input_safe_full_path, "*" + polarization_usable + "*.nc"))
+        glob.glob(os.path.join(input_safe_full_path, "*.nc")) # all polarisation accepted for prediction
     )
     logging.info("Number of files to process: %d" % len(files))
     if not os.path.exists(args.outputdir):

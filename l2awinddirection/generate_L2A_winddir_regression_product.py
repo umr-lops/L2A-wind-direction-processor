@@ -28,7 +28,7 @@ def generate_wind_product(tiles, model_regs, shape=(44, 44, 1)):
     except:
         tiles_stacked = tiles.stack(all_tiles=["tile_line", "tile_sample"])
 
-    mask = tiles_stacked.land_flag == False  # test AG
+    mask = tiles_stacked.land_flag == False
     mask_indices = np.where(mask)
     tiles_stacked_no_nan = tiles_stacked.where(mask, drop=True)
 
@@ -77,7 +77,6 @@ def generate_wind_product(tiles, model_regs, shape=(44, 44, 1)):
     tiles_stacked["wind_std"].attrs["units"] = "degree"
     tiles_stacked["wind_std"].attrs["vmin"] = 0
     tiles_stacked["wind_std"].attrs["vmax"] = 180
-
     return tiles_stacked.unstack()
 
 
