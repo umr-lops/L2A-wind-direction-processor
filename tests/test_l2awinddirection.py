@@ -5,7 +5,7 @@
 import pytest
 
 
-from l2awinddirection import l2awinddirection
+from l2awinddirection import mainl2awinddirection
 
 
 @pytest.fixture
