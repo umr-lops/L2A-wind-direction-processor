@@ -1,5 +1,6 @@
 callback_path: './'
 #model_path: './09h07_epoch_02__loss6.06.hdf5'
-model_path_pdf: './09h07_epoch_02__loss6.06.hdf5'
+#model_path_pdf: './09h07_epoch_02__loss6.06.hdf5'
+model_path_pdf: './models/09h07_epoch_02__loss6.06.hdf5'
 models_path_regression: './streaks_winddirection_regression_models/'
 workspace_prediction: './workspace_prediction/winddirection/tiles'
